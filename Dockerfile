@@ -7,7 +7,7 @@ RUN addgroup --gid 1001 "elg" && \
       chmod -R +x /elg/
 
 # Copy in our app, its requirements file and the entrypoint script
-COPY --chown=elg:elg serve.py docker-entrypoint.sh /elg/
+COPY --chown=elg:elg serve.py docker-entrypoint.sh init_model.py /elg/
 RUN chmod +x /elg/docker-entrypoint.sh && \
     chmod +x /elg/serve.py && chmod -R +x /elg/
 
@@ -23,3 +23,7 @@ RUN python -mvenv venv && \
 
 ENV WORKERS=1
 CMD ["/elg/venv/bin/python", "serve.py"]
+RUN ["/elg/venv/bin/python", "-c", "from init_model import Initializer; Initializer()"]
+
+ENV TRANSFORMERS_OFFLINE=1
+

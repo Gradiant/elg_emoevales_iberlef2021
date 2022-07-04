@@ -11,7 +11,7 @@ sh docker-build.sh
 
 ## Execute
 ```
-docker run --rm -p 0.0.0.0:8866:8866 --name emoeval elg_emoevales_iberlef2021:1.0
+docker run --rm -p 0.0.0.0:8866:8866 --name emoeval elg_emoevales_iberlef2021:1.0.1
 ```
 ## Use
 

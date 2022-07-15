@@ -9,6 +9,8 @@ from scipy.special import softmax
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["JSON_ADD_STATUS"] = False
+app.config["JSON_SORT_KEYS"] = False
 APP_ROOT = "./"
 app.config["APPLICATION_ROOT"] = APP_ROOT
 app.config["UPLOAD_FOLDER"] = "files/"
@@ -50,10 +52,21 @@ def predict(encoded_input):
 def predict_json():
 
     data = request.get_json()
-    if (data.get("type") != "text") or ("content" not in data):
-        output = invalid_request_error(None)
-        return output
-    content = data["content"]
+    if data["type"] != "text":
+        # Standard message code for unsupported response type
+        return generate_failure_response(
+            status=400,
+            code="elg.request.type.unsupported",
+            text="Request type {0} not supported by this service",
+            params=[data["type"]],
+            detail=None,
+        )
+    if "content" not in data:
+        return invalid_request_error(
+            None
+        )
+
+    content = data.get("content")
     try:
         encoded_input = tokenize(content)
         size = len(encoded_input["input_ids"][0])
@@ -61,14 +74,17 @@ def predict_json():
         output = generate_successful_response(scores)
         return output
     except Exception as e:
-        return generate_failure_response(
-            status=404,
-            code="elg.service.internalError",
-            text=None,
-            params=None,
-            detail=str(e),
+        text = (
+            "Unexpected error. If your input text is too long, this may be the cause."
         )
-
+        # Standard message for internal error - the real error message goes in params
+        return generate_failure_response(
+            status=500,
+            code="elg.service.internalError",
+            text="Internal error during processing: {0}",
+            params=[text],
+            detail=e.__str__(),
+        )
 
 def generate_successful_response(scores):
     ranking = np.argsort(scores)
